@@ -71,8 +71,10 @@ sampleId,barcode,schema,version
 sampleA,barcode01,RABV,1
 sampleB,barcode02,RABV,1
 ```
-sampleId → Unique identifier for the sample
-barcode → Barcode name used for demultiplexing (e.g., barcode01)
-schema → Primer scheme (must match a scheme available in meta_data/primer-schemes/)
-version → Version of the primer scheme
-📌 For a complete example, see the provided file: meta_data/meta_sheet.csv
+| Column     | Description                                                                  |
+| ---------- | ---------------------------------------------------------------------------- |
+| `sampleId` | Unique identifier for the sample                                             |
+| `barcode`  | Barcode name used for demultiplexing (e.g., `barcode01`)                     |
+| `schema`   | Primer scheme (must match a scheme available in `meta_data/primer-schemes/`) |
+| `version`  | Version of the primer scheme                                                 |
+
