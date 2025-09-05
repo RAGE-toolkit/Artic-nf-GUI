@@ -10,7 +10,7 @@ The pipeline automatically selects the correct container image depending on your
 
 ## 📦 Requirements
 
-- ⚠️ Note: This workflow has been developed and tested using ** EPI2ME Desktop v5.2.5 ** on an Apple M3 Pro system. It is expected that other Apple Silicon (ARM64) platforms will also support successful execution.
+- ⚠️ Note: This workflow has been developed and tested using **EPI2ME Desktop v5.2.5** on an **Apple M3 Pro system**. It is expected that other Apple Silicon (ARM64) platforms will also support successful execution.
 A corresponding Docker image is available for Linux (Ubuntu), and while the workflow is likely to run on Linux systems, this has not yet been formally tested.
 
 ---
