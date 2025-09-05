@@ -27,6 +27,8 @@ Download the EPI2ME Desktop application here:
 Paste below Github link in the EPI2ME import
 👉 https://github.com/RAGE-toolkit/Artic-nf-GUI
 
+---
+
 ## Workflow parameters
 
 Below are the main configurable parameters (default values shown):
