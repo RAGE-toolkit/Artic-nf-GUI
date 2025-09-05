@@ -111,8 +111,8 @@ if( params.rawfile_type == 'fast5_pod5' ) {
 log.info "=============================="
 
 def dir_plex_script          = file("${projectDir}/scripts/directory_plex.py", checkIfExists: true)
-def align_trim_script	       = Channel.fromPath("${projectDir}/scripts/align_trim.py")
-def vcf_merge_script	       = Channel.fromPath("${projectDir}/scripts/vcf_merge.py")
+def align_trim_script	     = Channel.fromPath("${projectDir}/scripts/align_trim.py")
+def vcf_merge_script	     = Channel.fromPath("${projectDir}/scripts/vcf_merge.py")
 def vcf_filter_script        = Channel.fromPath("${projectDir}/scripts/vcf_filter.py")
 def make_depth_mask_script   = Channel.fromPath("${projectDir}/scripts/make_depth_mask.py")
 def mask_script              = Channel.fromPath("${projectDir}/scripts/mask.py")
@@ -122,11 +122,11 @@ def report_script            = Channel.fromPath("${projectDir}/scripts/report.py
 def concat_script            = Channel.fromPath("${projectDir}/scripts/concat.py")
 
 
-def medaka_dir = Channel.fromPath("${params.out_dir}/medaka")
-def summary_stats_dir = Channel.fromPath("${params.out_dir}/summary_stats")
-def rawfile_dir = file("${params.rawfile_dir}")
-def basecaller_dir = Channel.fromPath("${params.basecaller_dir}")
-def basecaller_model = Channel.fromPath("${params.model_dir}")
+def medaka_dir 				= Channel.fromPath("${params.out_dir}/medaka")
+def summary_stats_dir 		= Channel.fromPath("${params.out_dir}/summary_stats")
+def rawfile_dir 			= file("${params.rawfile_dir}")
+def basecaller_dir 			= Channel.fromPath("${params.basecaller_dir}")
+def basecaller_model 		= Channel.fromPath("${params.model_dir}")
 
 //================output directory========================
 
@@ -188,13 +188,6 @@ workflow {
 		meta_ch = fq_channel.map { sid, item, scheme, version ->
     tuple(sid, item, scheme, version)
 		}
-
-		//ref_ch = fq_channel.map { sid, item, scheme, version ->
-    //	def ref = file("${params.primer_schema}/${scheme}/${version}/${scheme}.reference.fasta")
-    //	if( !ref.exists() )
-    //    	throw new IllegalArgumentException("Missing reference for ${scheme}/${version}")
-    //tuple(sid, ref)
-		//}
 
 		// MINIMAP channel here
 		minimap_channel = reads_ch
@@ -385,32 +378,5 @@ workflow {
 
 	//**********running REPORT
 	REPORT(SUMMARY_STATS.out.summary, medaka_dir, summary_stats_dir, report_script)
-
-	//VCF_FILTER(vcf_filter_channel)
-	//running ALIGN_TRIM_2
-	//ALIGN_TRIM_2(align_trim_2_channel)
-	//align_trim_channel.view { row -> "ALIGN_TRIM_INPUT-1 >>> $row" }
-	//ALIGN_TRIM_1(align_trim_channel)
-	//ALIGN_TRIM_1.out.trimmed_bam.view()
-  // Downstream graph (kept identical to your original)
-  //ALIGN_TRIM_1(MINIMAP2.out.sorted_bam.collect(), align_trim_script, bed_ch, fq_channel)
-  //ALIGN_TRIM_2(ALIGN_TRIM_1.out.trimmed_bam.collect(), align_trim_script, bed_ch, fq_channel)
-  //MEDAKA_1(ALIGN_TRIM_1.out.trimmed_bam.collect(), fq_channel)
-  //MEDAKA_2(ALIGN_TRIM_2.out.primertrimmed_bam.collect(), MEDAKA_1.out.hdf, fq_channel)
-  //MEDAKA_SNP_1(MEDAKA_2.out.hdf.collect(), MEDAKA_1.out.hdf, ref_ch, fq_channel)
-	//MEDAKA_SNP_2(MEDAKA_SNP_1.out.vcf.collect(), MEDAKA_2.out.hdf, ref_ch, fq_channel)
-  //VCF_MERGE(MEDAKA_SNP_2.out.vcf.collect(), MEDAKA_SNP_1.out.vcf, bed_ch, vcf_merge_script, fq_channel)
-  //LONGSHOT(VCF_MERGE.out.merged_tbi.collect(), ALIGN_TRIM_2.out.primertrimmed_bam, ref_ch, fq_channel)
-  //VCF_FILTER(LONGSHOT.out.vcf.collect(), vcf_filter_script, fq_channel)
-  //MAKE_DEPTH_MASK(VCF_FILTER.out.pass_vcf.collect(), ALIGN_TRIM_2.out.primertrimmed_bam, ref_ch, make_depth_mask_script, fq_channel)
-  //MASK(MAKE_DEPTH_MASK.out.coverage_mask.collect(), VCF_FILTER.out.fail_vcf, ref_ch, mask_script, fq_channel)
-  //BCFTOOLS_CONSENSUS(MASK.out.preconsensus.collect(), VCF_FILTER.out.pass_vcf, MAKE_DEPTH_MASK.out.coverage_mask, fq_channel)
-  //FASTA_HEADER(BCFTOOLS_CONSENSUS.out.consensus_fa.collect(), fasta_header_script, fq_channel)
-  //CONCAT_FOR_MUSCLE(FASTA_HEADER.out.fasta, ref_ch, fq_channel)
-  //MUSCLE(CONCAT_FOR_MUSCLE.out.muscle_fa, fq_channel)
-  //CONCAT(MUSCLE.out.muscle_op_fasta)
-  //MAFFT(CONCAT.out.genome_fa)
-  //SUMMARY_STATS(MAFFT.out.mafft_fa, medaka_dir, summary_stats_script)
-  //REPORT(SUMMARY_STATS.out.summary, medaka_dir, summary_stats_dir, report_script)
 }
 
