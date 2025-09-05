@@ -57,7 +57,7 @@ Below are the main configurable parameters (default values shown):
 | `--seq_len`           | `350`                                         | Expected amplicon sequence length                        |
 
 
-## 📜 Workflow Schema
+## Parameter description
 
 The workflow is described by a [JSON schema](nextflow_schema.json), which defines all available parameters, their defaults, and validation rules.  
 This schema is used to generate the **GUI configuration in EPI2ME Desktop** and ensures consistent parameter handling.
@@ -69,7 +69,7 @@ This schema is used to generate the **GUI configuration in EPI2ME Desktop** and 
 - **meta_file** (`string`, *file-path*)  
   Path to the metadata file (CSV).  
   - Must be in CSV format  
-  - See [📑 Sample sheet](#-sample-sheet) for details  
+  - See [📑 Sample sheet](meta_data/meta_sheet.csv) for details  
 
 - **rawfile_dir** (`string`, *directory-path*)  
   Directory containing raw input files.  
