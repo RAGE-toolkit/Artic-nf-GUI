@@ -64,13 +64,13 @@ The `sample_sheet` parameter should point to a CSV file containing the list of s
 The file must include the following headers:
 
 
-### Example
+#### Example
 
 ```csv
 sampleId,barcode,schema,version
 sampleA,barcode01,RABV,1
 sampleB,barcode02,RABV,1
-
+```
 sampleId → Unique identifier for the sample
 barcode → Barcode name used for demultiplexing (e.g., barcode01)
 schema → Primer scheme (must match a scheme available in meta_data/primer-schemes/)
