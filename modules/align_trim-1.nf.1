@@ -1,0 +1,33 @@
+process ALIGN_TRIM_1 {
+  tag { sampleId }
+
+  // If you've switched to output_dir in the schema, reflect it here:
+  publishDir "${params.output_dir}/medaka", mode: 'copy'
+
+  input:
+    tuple val(sampleId), path(input_bam), val(item), val(scheme), val(version)
+    path align_trim
+    path bed
+
+  output:
+    path "${params.run_name}_${sampleId}.alignreport.txt",           emit: align_report
+    path "${params.run_name}_${sampleId}.trimmed.rg.sorted.bam",     emit: trimmed_bam
+    path "${params.run_name}_${sampleId}.trimmed.rg.sorted.bam.bai", emit: trimmed_bai
+
+  // Optional: cap concurrency without forcing a global wait
+  maxForks params.queueSize
+
+  script:
+  """
+  set -euo pipefail
+
+  python "${align_trim}" --normalise ${params.medaka_normalise} "${bed}" --start \
+    --report "${params.run_name}_${sampleId}.alignreport.txt" \
+    < "${input_bam}" \
+    2> "${params.run_name}_${sampleId}.alignreport.err" \
+  | samtools sort -T "${sampleId}" -o "${params.run_name}_${sampleId}.trimmed.rg.sorted.bam"
+
+  samtools index "${params.run_name}_${sampleId}.trimmed.rg.sorted.bam"
+  """
+}
+
