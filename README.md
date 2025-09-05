@@ -1,6 +1,6 @@
 # 🧬 Artic-nf (RAGE-toolkit)
 
-Artic-nf-GUI is a graphical user interface (GUI) for the Artic-nf workflow, designed to integrate with Oxford Nanopore’s EPI2ME platform.
+Artic-nf-GUI is a graphical user interface (GUI) for the [Artic-nf]() workflow, designed to integrate with Oxford Nanopore’s EPI2ME platform.
 
 ⚠️ Note: This project is currently under active development. At present, basecalling modules such as Dorado and Guppy are not supported within the GUI. Users should provide pre-basecalled FASTQ files (e.g., from a fastq_pass directory) as input to run the workflow.
 
@@ -26,4 +26,33 @@ Download the EPI2ME Desktop application here:
 
 Paste below Github link in the EPI2ME import
 👉 https://github.com/RAGE-toolkit/Artic-nf-GUI
+
+## Workflow parameters
+## ⚙️ Parameters
+
+Below are the main configurable parameters (default values shown):
+
+| Parameter             | Default value                                 | Description                                              |
+|-----------------------|-----------------------------------------------|----------------------------------------------------------|
+| `--sample_sheet`      | `meta_data/meta_sheet.csv`                    | CSV file with sample metadata (**required**)             |
+| `--output_dir`        | `results`                                     | Output directory                                         |
+| `--run_name`          | `test_run`                                    | Run name (prefix for outputs)                            |
+| `--rawfile_type`      | `fastq`                                       | Input type: `fastq` or `fast5_pod5`                      |
+| `--rawfile_dir`       | `test_data/fastq_pass`                        | Input directory for raw files                            |
+| `--fastq_dir`         | `raw_files/fastq`                             | Location for processed FASTQ files                       |
+| `--fq_extension`      | `.fastq`                                      | FASTQ file extension                                     |
+| `--primer_schema`     | `meta_data/primer-schemes`                    | Path to primer schemes                                   |
+| `--kit_name`          | `EXP-NBD196`                                  | Nanopore kit name (e.g., `EXP-NBD104`, `EXP-NBD114`)     |
+| `--threads`           | `5`                                           | CPUs for processes (minimap2, medaka, etc.)              |
+| `--basecaller`        | `Dorado`                                      | Basecaller (`Dorado` or `Guppy`)                         |
+| `--basecaller_dir`    | `null`                                        | Path to basecaller (only if not using container)         |
+| `--model_dir`         | `null`                                        | Path to models (Dorado only)                             |
+| `--basecaller_config` | `dna_r10.4.1_e8.2_400bps_fast@v4.2.0`         | Basecaller model config                                  |
+| `--run_mode`          | `cuda:all`                                    | GPU run mode                                             |
+| `--basecaller_threads`| `5`                                           | Guppy threads (ignored for Dorado)                       |
+| `--medaka_model`      | `r941_min_fast_g303`                          | Medaka model                                             |
+| `--medaka_normalise`  | `200`                                         | Medaka normalisation parameter                           |
+| `--mask_depth`        | `20`                                          | Minimum depth for masking                                |
+| `--seq_len`           | `350`                                         | Expected amplicon sequence length                        |
+
 
