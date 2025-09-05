@@ -10,10 +10,8 @@ The pipeline automatically selects the correct container image depending on your
 
 ## 📦 Requirements
 
-- [Nextflow ≥ 23.10.0](https://www.nextflow.io/)  
-- Either:
-  - **Docker** (recommended)  
-  - or **Conda** (requires `mamba`/`conda`)  
+- ⚠️ Note: This workflow has been developed and tested using EPI2ME Desktop v5.2.5 on an Apple M3 Pro system. It is expected that other Apple Silicon (ARM64) platforms will also support successful execution.
+A corresponding Docker image is available for Linux (Ubuntu), and while the workflow is likely to run on Linux systems, this has not yet been formally tested.
 
 ---
 
@@ -21,7 +19,7 @@ The pipeline automatically selects the correct container image depending on your
 
 ### Download EPI2ME
 
-You can download the EPI2ME Desktop application here:
+Download the EPI2ME Desktop application here:
 👉 https://epi2me.nanoporetech.com
 
 ### Import workflow in EPI2ME
