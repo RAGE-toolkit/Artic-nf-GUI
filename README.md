@@ -57,24 +57,133 @@ Below are the main configurable parameters (default values shown):
 | `--seq_len`           | `350`                                         | Expected amplicon sequence length                        |
 
 
-### 📑 Sample sheet
+## 📜 Workflow Schema
 
-The `sample_sheet` parameter should point to a CSV file containing the list of samples and their corresponding metadata such as **barcode**, **primer scheme**, and **version**.  
+The workflow is described by a [JSON schema](nextflow_schema.json), which defines all available parameters, their defaults, and validation rules.  
+This schema is used to generate the **GUI configuration in EPI2ME Desktop** and ensures consistent parameter handling.
 
-The file must include the following headers:
+---
 
+### 🔹 Input
 
-#### Example
+- **meta_file** (`string`, *file-path*)  
+  Path to the metadata file (CSV).  
+  - Must be in CSV format  
+  - See [📑 Sample sheet](#-sample-sheet) for details  
 
-```csv
-sampleId,barcode,schema,version
-sampleA,barcode01,RABV,1
-sampleB,barcode02,RABV,1
-```
-| Column     | Description                                                                  |
-| ---------- | ---------------------------------------------------------------------------- |
-| `sampleId` | Unique identifier for the sample                                             |
-| `barcode`  | Barcode name used for demultiplexing (e.g., `barcode01`)                     |
-| `schema`   | Primer scheme (must match a scheme available in `meta_data/primer-schemes/`) |
-| `version`  | Version of the primer scheme                                                 |
+- **rawfile_dir** (`string`, *directory-path*)  
+  Directory containing raw input files.  
+  - Supports `FASTQ`, `FAST5`, or `POD5`  
+
+- **rawfile_type** (`string`)  
+  Type of raw input files.  
+  - Options: `fastq`, `fast5_pod5`  
+  - Default: `fastq`  
+
+- **primer_schema** (`string`, *directory-path*)  
+  Path to the primer scheme directory.  
+  - Example: `/Documents/GitHub/Artic-nf/meta_data/primer_scheme`  
+
+- **basecaller** (`string`)  
+  Basecaller to run.  
+  - Options: `Dorado`, `Guppy`  
+  - Default: `Dorado`  
+
+- **kit_name** (`string`)  
+  Default: `EXP-NBD196`  
+  - Defines barcode kit to be used  
+  - Barcode lists can be obtained from Guppy/Dorado repositories  
+
+- **run_name** (`string`)  
+  Default: `test_run`  
+  - Label for the sequencing run  
+  - Used as a prefix for output files  
+
+---
+
+### 🔹 Output Options
+
+- **output_dir** (`string`, *directory-path*)  
+  Directory where all workflow results are stored.  
+  - Default: `results`  
+
+---
+
+### 🔹 Basecalling Options
+
+- **basecaller_dir** (`string`, *file-path*)  
+  Path to the basecaller executable (optional).  
+
+- **model_dir** (`string`, *directory-path*)  
+  Path to basecalling models (required only for Dorado).  
+
+- **basecaller_config** (`string`)  
+  Default: `dna_r10.4.1_e8.2_400bps_fast@v4.2.0`  
+  - Model config to use for basecalling.  
+
+- **basecaller_threads** (`integer`)  
+  Default: `5`  
+  - Number of CPU threads for Guppy (ignored for Dorado).  
+
+- **gpu_mode** (`string`)  
+  Default: `cuda:all`  
+  - GPU device specification for basecalling.  
+  - Options: `cuda:0`, `cuda:all`, or `none`.  
+
+---
+
+### 🔹 Advanced Options
+
+- **fastq_dir** (`string`)  
+  Default: `raw_files/fastq`  
+  - Directory for guppyplexed FASTQ files.  
+
+- **fq_extension** (`string`)  
+  Default: `.fastq`  
+  - FASTQ file extension.  
+
+- **seq_len** (`integer`)  
+  Default: `350`  
+  - Expected sequence length for plexing (primer dependent).  
+
+- **medaka_model** (`string`)  
+  Default: `r941_min_fast_g303`  
+  - Medaka model for consensus polishing.  
+
+- **medaka_normalise** (`integer`)  
+  Default: `200`  
+  - Target depth for Medaka normalization.  
+  - Subsamples reads to reduce runtime and memory usage.  
+
+- **mask_depth** (`integer`)  
+  Default: `20`  
+  - Minimum depth threshold for consensus masking.  
+
+---
+
+### 🔹 Miscellaneous Options
+
+- **threads** (`integer`)  
+  Default: `5`  
+  - Number of CPU threads for multiprocess-enabled steps.  
+  - ⚠️ Note: Minimap2 memory usage scales with thread count.  
+
+- **queueSize** (`integer`)  
+  Default: `5`  
+  - Maximum number of parallel tasks allowed by the executor.  
+  - Set to `1` for serial debugging.  
+
+---
+
+### 💻 Resources
+
+- **Recommended**: 5 CPUs, 10 GB RAM  
+- **Minimum**: 4 CPUs, 8 GB RAM  
+- **Runtime**: ~1 minute per sample (depends on read count, reference length, and compute power)  
+- **Architecture Support**: ✅ ARM64 (Apple Silicon, aarch64)  
+
+---
+
+📌 For the full schema, see [`nextflow_schema.json`](nextflow_schema.json).
+
 
