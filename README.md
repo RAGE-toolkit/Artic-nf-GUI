@@ -28,7 +28,6 @@ Paste below Github link in the EPI2ME import
 👉 https://github.com/RAGE-toolkit/Artic-nf-GUI
 
 ## Workflow parameters
-## ⚙️ Parameters
 
 Below are the main configurable parameters (default values shown):
 
@@ -56,3 +55,22 @@ Below are the main configurable parameters (default values shown):
 | `--seq_len`           | `350`                                         | Expected amplicon sequence length                        |
 
 
+### 📑 Sample sheet
+
+The `sample_sheet` parameter should point to a CSV file containing the list of samples and their corresponding metadata such as **barcode**, **primer scheme**, and **version**.  
+
+The file must include the following headers:
+
+
+### Example
+
+```csv
+sampleId,barcode,schema,version
+sampleA,barcode01,RABV,1
+sampleB,barcode02,RABV,1
+
+sampleId → Unique identifier for the sample
+barcode → Barcode name used for demultiplexing (e.g., barcode01)
+schema → Primer scheme (must match a scheme available in meta_data/primer-schemes/)
+version → Version of the primer scheme
+📌 For a complete example, see the provided file: meta_data/meta_sheet.csv
