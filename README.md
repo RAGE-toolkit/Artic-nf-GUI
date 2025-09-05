@@ -19,9 +19,13 @@ The pipeline automatically selects the correct container image depending on your
 
 ## 🚀 Quick start
 
-### Clone the repository
+### Download EPI2ME
 
-```bash
-git clone https://github.com/sandeepkasaragod/test_gui.git
-cd test_gui
+You can download the EPI2ME Desktop application here:
+👉 https://epi2me.nanoporetech.com
+
+### Import workflow in EPI2ME
+
+Paste below Github link in the EPI2ME import
+👉 https://github.com/RAGE-toolkit/Artic-nf-GUI
 
