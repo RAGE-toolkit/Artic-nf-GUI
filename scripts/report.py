@@ -146,7 +146,7 @@ def generate_report(alignreport_dir, summary_stats_file, output_dir="summary_rep
         html_sections.append(section)
 
     for filepath in alignreport_files:
-        if ".alignreport.txt" in filepath:
+        if ".alignreport" in filepath:
             sample_id = os.path.basename(filepath).replace(".txt", "")
             aln_df = pd.read_csv(filepath, sep='\t')
             if aln_df.empty:
