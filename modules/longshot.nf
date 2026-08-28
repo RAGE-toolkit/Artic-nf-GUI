@@ -8,7 +8,7 @@ process LONGSHOT {
 	publishDir "${params.out_dir}/medaka", mode: 'copy'
 
 	input:
-		tuple val(sampleId), path(input_vcf), path(input_bam), path(reference), val(item), val(scheme), val(version)
+		tuple val(sampleId), path(input_vcf), path(input_tbi), path(input_bam), path(reference), val(item), val(scheme), val(version)
 
 	output:
 		tuple val(sampleId), path ("${params.run_name}_${sampleId}.longshot.merged.vcf"), emit: vcf
@@ -36,6 +36,7 @@ process LONGSHOT {
 		--bam "${input_bam}" \
 		--ref "${reference}" \
 		--out "${params.run_name}_${sampleId}.longshot.merged.vcf"	\
+		--potential_variants "${input_vcf}"
 	"""
 }
 

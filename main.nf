@@ -290,7 +290,8 @@ workflow {
 	VCF_MERGE(vcf_merge_channel)
 
 	//LONGSHOT channel
-	longshot_channel = VCF_MERGE.out.merged_tbi
+	longshot_channel = VCF_MERGE.out.merged_vcf
+		.join(VCF_MERGE.out.merged_tbi)
 		.join(ALIGN_TRIM_2.out.primertrimmed_bam)
 		.join(ref_ch)
 		.join(fq_channel)
