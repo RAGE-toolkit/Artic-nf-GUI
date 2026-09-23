@@ -35,10 +35,10 @@ process LONGSHOT {
 	longshot -P 0 -F -A --no_haps \
 		--bam "${input_bam}" \
 		--ref "${reference}" \
-		--out "${params.run_name}_${sampleId}.longshot.merged.vcf"	\
+		--out "${params.run_name}_${sampleId}.longshot.merged.vcf" \
 		--potential_variants "${input_vcf}"
 	"""
 }
-
+//     --potential_variants "${input_vcf}"
 //--potential_variants "${sampleId}.potential.vcf.gz"
 

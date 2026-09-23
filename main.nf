@@ -17,21 +17,19 @@ include { PLEX_FQ_FILES }      from "${MODULES}/plex_fq_files.nf"
 include { PLEX_DIRS }          from "${MODULES}/plex_dirs.nf"
 
 include { MINIMAP2 }           from "${MODULES}/minimap2.nf"
-include { ALIGN_TRIM_1 }       from "${MODULES}/align_trim-1.nf"
-include { ALIGN_TRIM_2 }       from "${MODULES}/align_trim-2.nf"
-include { MEDAKA_1 }           from "${MODULES}/medaka-1.nf"
-include { MEDAKA_2 }           from "${MODULES}/medaka-2.nf"
-include { MEDAKA_SNP_1 }       from "${MODULES}/medaka_snp-1.nf"
-include { MEDAKA_SNP_2 }       from "${MODULES}/medaka_snp-2.nf"
+include { ALIGN_TRIM }         from "${MODULES}/align_trim.nf"
+include { SPLIT_UNMATCHED }    from "${MODULES}/split_unmatched.nf"
+include { CLAIR3 }             from "${MODULES}/clair3-1.nf"
+include { CLAIR3_2 }           from "${MODULES}/clair3-2.nf"
+include { CLAIR3_UNMATCHED }   from "${MODULES}/clair3_unmatched.nf"
 include { VCF_MERGE }          from "${MODULES}/vcf_merge.nf"
-include { LONGSHOT }           from "${MODULES}/longshot.nf"
 include { VCF_FILTER }         from "${MODULES}/vcf_filter.nf"
+include { COMPRESS_AND_INDEX_VCF } from "${MODULES}/compress_and_index_vcf.nf"
 include { MAKE_DEPTH_MASK }    from "${MODULES}/make_depth_mask.nf"
 include { MASK }               from "${MODULES}/mask.nf"
+include { BCFTOOLS_NORM }      from "${MODULES}/bcftools_norm.nf"
 include { BCFTOOLS_CONSENSUS } from "${MODULES}/bcftools_consensus.nf"
 include { FASTA_HEADER }       from "${MODULES}/fasta_header.nf"
-include { CONCAT_FOR_MUSCLE }  from "${MODULES}/concat_for_muscle.nf"
-include { MUSCLE }             from "${MODULES}/muscle.nf"
 include { CONCAT }             from "${MODULES}/concat.nf"
 include { MAFFT }              from "${MODULES}/mafft.nf"
 include { SUMMARY_STATS }      from "${MODULES}/summary_stats.nf"
@@ -42,7 +40,7 @@ include { REPORT }             from "${MODULES}/report.nf"
 // -----------------------------------------------------------------------------
 params.out_dir       = params.output_dir    ?: "${projectDir}/results"
 params.fastq_dir     = params.fastq_dir     ?: 'raw_files/fastq'
-params.rawfile_dir   = params.rawfile_dir   ?: 'raw_files'          
+params.rawfile_dir   = params.rawfile_dir   ?: 'raw_files'
 params.rawfile_type  = params.rawfile_type  ?: 'fastq'              // 'fastq' | 'fast5_pod5'
 params.basecaller    = params.basecaller    ?: 'Dorado'             // 'Dorado' | 'Guppy'
 params.fq_extension  = params.fq_extension  ?: '.fastq'
@@ -92,9 +90,9 @@ log.info "Rawfile dir      : ${params.rawfile_dir}"
 log.info "Threads          : ${params.threads}"
 log.info "QueueSize        : ${params.queueSize}"
 log.info "Mask size        : ${params.mask_depth}"
-log.info "Medaka normalise : ${params.medaka_normalise}"	
-log.info "Medaka model     : ${params.medaka_model}"
-log.info "Sequence length  : ${params.seq_len}" 
+log.info "Normalise        : ${params.normalise}"
+log.info "Clair3 model     : ${params.model_path}"
+log.info "Sequence length  : ${params.seq_len}"
 
 if( params.rawfile_type == 'fast5_pod5' ) {
     log.info "---- Basecaller details ----"
@@ -110,8 +108,7 @@ if( params.rawfile_type == 'fast5_pod5' ) {
 
 log.info "=============================="
 
-def dir_plex_script          = file("${projectDir}/scripts/directory_plex.py", checkIfExists: true)
-def align_trim_script	     = Channel.fromPath("${projectDir}/scripts/align_trim.py")
+def dir_plex_script          = file("${projectDir}/scripts/plex.py", checkIfExists: true)
 def vcf_merge_script	     = Channel.fromPath("${projectDir}/scripts/vcf_merge.py")
 def vcf_filter_script        = Channel.fromPath("${projectDir}/scripts/vcf_filter.py")
 def make_depth_mask_script   = Channel.fromPath("${projectDir}/scripts/make_depth_mask.py")
@@ -119,7 +116,7 @@ def mask_script              = Channel.fromPath("${projectDir}/scripts/mask.py")
 def fasta_header_script      = Channel.fromPath("${projectDir}/scripts/fasta_header.py")
 def summary_stats_script     = Channel.fromPath("${projectDir}/scripts/summary_stats.py")
 def report_script            = Channel.fromPath("${projectDir}/scripts/report.py")
-def concat_script            = Channel.fromPath("${projectDir}/scripts/concat.py")
+def concat_script            = Channel.fromPath("${projectDir}/scripts/consensus_combiner.py")
 
 
 def medaka_dir 				= Channel.fromPath("${params.out_dir}/medaka")
@@ -173,7 +170,7 @@ def script = file("${projectDir}/scripts/fasta_header.py", checkIfExists: true)
 workflow {
 
   if( params.rawfile_type == 'fastq' ) {
-    
+
 		//running PLEX_DIRS here
 		PLEX_DIRS(plex_dirs_channel)
 
@@ -184,7 +181,7 @@ workflow {
         tuple(sampleId, file)
     }
     .groupTuple()
-	
+
 		meta_ch = fq_channel.map { sid, item, scheme, version ->
     tuple(sid, item, scheme, version)
 		}
@@ -197,17 +194,10 @@ workflow {
 		//**********running MINIMAP here
 		MINIMAP2(minimap_channel)
 
-		//channel the align_trim script
-		align_trim_scr = fq_channel.map { sid, item, scheme, version ->
-    	def script = file("${projectDir}/scripts/align_trim.py", checkIfExists: true)
-    	tuple(sid, script)
-		}
-
-		//ALIGN_TRIM_1 channel
+		//ALIGN_TRIM channel
 		align_trim_channel = MINIMAP2.out.sorted_bam
 				.join(meta_ch)   // → [sid, bam, sid, item, scheme, version]
 				.join(bed_ch)    // → [sid, bam, sid, item, scheme, version, sid, bed]
-  			.join(align_trim_scr) //[sid, bam, sid, item, scheme, version, sid, bed, align_trim_script]
 	}
   else {
     if( params.basecaller == 'Dorado' ) {
@@ -225,53 +215,39 @@ workflow {
     }
   }
 
-	//align_trim_channel.view { row ->
-  //  "ALIGN_TRIM_INPUT-1 >>> ${row.collect { it instanceof List ? "LIST(${it})" : it }}"
-	//}
+	//**********running ALIGN_TRIM
+	ALIGN_TRIM(align_trim_channel)
 
-	//**********running ALIGN_TRIM_1
-	ALIGN_TRIM_1(align_trim_channel)
+	//SPLIT_UNMATCHED channel
+	split_unmatched_channel = ALIGN_TRIM.out.primertrimmed_bam
+		.join(meta_ch)
 
-	//ALIGN_TRIM_2 channel
-	align_trim_2_channel = MINIMAP2.out.sorted_bam
-		.join(meta_ch)   // → [sid, bam, sid, item, scheme, version]
-		.join(bed_ch)    // → [sid, bam, sid, item, scheme, version, sid, bed]
-		.join(align_trim_scr)
+	//**********running SPLIT_UNMATCHED
+	SPLIT_UNMATCHED(split_unmatched_channel)
 
-	//**********running ALIGN_TRIM_2
-	ALIGN_TRIM_2(align_trim_2_channel)
-	
-	//MEDAKA-1 channel
-	medaka_1_channel = ALIGN_TRIM_1.out.trimmed_bam
-		.join(fq_channel)
-
-	//**********running MEDAKA-1
-	MEDAKA_1(medaka_1_channel)
-	//ALIGN_TRIM_2.out.primertrimmed_bam.view()
-	//medaka_1_channel.view()
-
-	//MEDAKA-2 channel
-	medaka_2_channel = ALIGN_TRIM_2.out.primertrimmed_bam
-		.join(fq_channel)
-
-	//**********running MEDAKA-2
-	MEDAKA_2(medaka_2_channel)
-	
-	//MEDAKA_SNP_1 channel
-	medaka_snp_1_channel = MEDAKA_1.out.hdf
+	//CLAIR3 (pool 1) channel
+	clair3_1_channel = ALIGN_TRIM.out.pool1_bam
 		.join(ref_ch)
-		.join(fq_channel)
+		.join(meta_ch)
 
-	//**********running MEDAKA-2
-	MEDAKA_SNP_1(medaka_snp_1_channel)
+	//**********running CLAIR3 (pool 1)
+	CLAIR3(clair3_1_channel)
 
-	//MEDAKA_SNP_2 channel
-	medaka_snp_2_channel = MEDAKA_2.out.hdf
+	//CLAIR3_2 (pool 2) channel
+	clair3_2_channel = ALIGN_TRIM.out.pool2_bam
 		.join(ref_ch)
-		.join(fq_channel)
-	
-	//**********running MEDAKA_SNP_2
-	MEDAKA_SNP_2(medaka_snp_2_channel)
+		.join(meta_ch)
+
+	//**********running CLAIR3_2 (pool 2)
+	CLAIR3_2(clair3_2_channel)
+
+	//CLAIR3_UNMATCHED channel
+	clair3_unmatched_channel = SPLIT_UNMATCHED.out.unmatched_bam
+		.join(ref_ch)
+		.join(meta_ch)
+
+	//**********running CLAIR3_UNMATCHED
+	CLAIR3_UNMATCHED(clair3_unmatched_channel)
 
 	//channel the vcf_merge script
 	vcf_merge_scr = fq_channel.map { sid, item, scheme, version ->
@@ -280,8 +256,9 @@ workflow {
 	}
 
 	//VCF_MERGE channel
-	vcf_merge_channel = MEDAKA_SNP_2.out.vcf
-		.join(MEDAKA_SNP_1.out.vcf)
+	vcf_merge_channel = CLAIR3_2.out.vcf
+		.join(CLAIR3.out.vcf)
+		.join(CLAIR3_UNMATCHED.out.vcf)
 		.join(bed_ch)
 		.join(vcf_merge_scr)
 		.join(fq_channel)
@@ -289,54 +266,59 @@ workflow {
 	//**********running VCF_MERGE
 	VCF_MERGE(vcf_merge_channel)
 
-	//LONGSHOT channel
-	longshot_channel = VCF_MERGE.out.merged_vcf
-		.join(VCF_MERGE.out.merged_tbi)
-		.join(ALIGN_TRIM_2.out.primertrimmed_bam)
-		.join(ref_ch)
-		.join(fq_channel)
-
-	//**********running LONGSHOT
-	LONGSHOT(longshot_channel)	
-
-
 	//VCF_FILTER channel
-	vcf_filter_channel = LONGSHOT.out.vcf
+	vcf_filter_channel = VCF_MERGE.out.merged_vcf
 		.join(vcf_filter_scr)
 		.join(fq_channel)
 
 	//**********running VCF_FILTER
 	VCF_FILTER(vcf_filter_channel)
-	
+
+	//COMPRESS_AND_INDEX_VCF channel
+	compress_and_index_vcf_channel = VCF_FILTER.out.pass_vcf
+		.join(fq_channel)
+
+	//**********running COMPRESS_AND_INDEX_VCF
+	COMPRESS_AND_INDEX_VCF(compress_and_index_vcf_channel)
+
 	//MAKE_DEPTH_MASK channel
 	make_depth_mask_channel = VCF_FILTER.out.pass_vcf
-		.join(ALIGN_TRIM_2.out.primertrimmed_bam)
+		.join(ALIGN_TRIM.out.primertrimmed_bam)
 		.join(ref_ch)
 		.join(make_depth_mask_scr)
 		.join(fq_channel)
 
-	//**********running VCF_FILTER
+	//**********running MAKE_DEPTH_MASK
 	MAKE_DEPTH_MASK(make_depth_mask_channel)
 
 	//MASK channel
 	mask_channel = MAKE_DEPTH_MASK.out.coverage_mask
-		.join(VCF_FILTER.out.fail_vcf)	
+		.join(VCF_FILTER.out.fail_vcf)
 		.join(ref_ch)
 		.join(mask_scr)
 		.join(fq_channel)
 
-	//**********running VCF_FILTER
+	//**********running MASK
 	MASK(mask_channel)
+
+	//BCFTOOLS_NORM channel
+	bcftools_norm_channel = MASK.out.preconsensus
+		.join(COMPRESS_AND_INDEX_VCF.out.vcf_gz)
+		.join(fq_channel)
+
+	//**********running BCFTOOLS_NORM
+	BCFTOOLS_NORM(bcftools_norm_channel)
 
 	//BCFTOOLS_CONSENSUS channel
 	bcftools_consensus_channel = MASK.out.preconsensus
-		.join(VCF_FILTER.out.pass_vcf)
+		.join(BCFTOOLS_NORM.out.normalised_vcf)
+		.join(BCFTOOLS_NORM.out.normalised_tbi)
 		.join(MAKE_DEPTH_MASK.out.coverage_mask)
 		.join(fq_channel)
 
 	//**********running BCFTOOLS_CONSENSUS
 	BCFTOOLS_CONSENSUS(bcftools_consensus_channel)
-	
+
 
 	//FASTA_HEADER channel
 	fasta_header_channel = BCFTOOLS_CONSENSUS.out.consensus_fa
@@ -347,30 +329,16 @@ workflow {
 	FASTA_HEADER(fasta_header_channel)
 
 
-	//CONCAT_FOR_MUSCLE channel
-	contat_for_muscle = FASTA_HEADER.out.fasta
-		.join(ref_ch)
-		.join(fq_channel)
-
-	//**********running CONCAT_FOR_MUSCLE
-	CONCAT_FOR_MUSCLE(contat_for_muscle)
-
-
-	//MUSCLE channel
-	muscle_channel = CONCAT_FOR_MUSCLE.out.muscle_fa
-		.join(fq_channel)
-
-	//**********running MUSCLE
-	MUSCLE(muscle_channel)
-
 	//CONCAT channel
-	concat_channel = MUSCLE.out.muscle_op_fasta.collect()
+	concat_channel = FASTA_HEADER.out.fasta
+		.map { sid, fasta -> fasta }
+		.collect()
 
 	CONCAT(concat_channel, concat_script)
 
 	//MAFFT channel
 	mafft_channel = CONCAT.out.genome_fa
-	
+
 	//**********running MAFFT
 	MAFFT(mafft_channel)
 
@@ -380,4 +348,3 @@ workflow {
 	//**********running REPORT
 	REPORT(SUMMARY_STATS.out.summary, medaka_dir, summary_stats_dir, report_script)
 }
-

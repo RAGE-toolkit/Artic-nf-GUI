@@ -2,7 +2,7 @@
 process CONCAT {
 
 	tag { "concat_genome" }
-	
+
 	publishDir "${params.out_dir}/concatenate", mode: 'copy'
 
 	input:
@@ -18,8 +18,6 @@ process CONCAT {
 
 		"""
 			set -euo pipefail
-			python ${concat_script} -i ${fasta_files} -o concat_genome.fasta
+			python ${concat_script} . -o concat_genome.fasta -r ${params.run_name}
     """
 }
-// 21       #cat ${fasta_files.join(' ')} > concat_genome.fasta
-

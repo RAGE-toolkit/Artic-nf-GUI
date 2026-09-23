@@ -3,8 +3,6 @@ process PLEX_DIRS {
   publishDir "${projectDir}/${params.fastq_dir}", mode: 'copy', overwrite: true
 
   input:
-    //path input_dir
-		//path script_ch
     tuple path(input_dir), path(script_ch), val(sample_id), val(item), val(scheme), val(version)
 
   output:
@@ -15,12 +13,10 @@ process PLEX_DIRS {
     """
     set -euo pipefail
 		python "${script_ch}" \
-      --skip_quality_check \
-      --min_length ${params.seq_len} \
-      -d "${input_dir}/${item}" \
-      -o "${sample_id}_${item}${params.fq_extension}"
-
+      --skip-quality-check \
+      --min-length ${params.seq_len} \
+      --max-length ${params.seq_max_len} \
+      --directory "${input_dir}/${item}" \
+      --output "${sample_id}_${item}${params.fq_extension}"
     """
 }
-//python "${script_path}" \
-//#def script_path = "${projectDir}/scripts/directory_plex.py"
